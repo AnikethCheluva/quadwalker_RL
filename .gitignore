@@ -1,0 +1,36 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+rl_env/
+venv/
+.env/
+.venv/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VS Code settings
+.vscode/
+
+# Logs and outputs
+*.log
+*.out
+
+# Python dependency files
+pip-wheel-metadata/
+*.egg-info/
+
+# MuJoCo or model files (optional)
+*.mjb
+*.xml~
+*.binary
+
+# Cache and build
+build/
+dist/
+.cache/
+.mujoco/
+.mujoco_cache/
