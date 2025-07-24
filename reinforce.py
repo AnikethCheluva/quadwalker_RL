@@ -2,12 +2,13 @@ import gymnasium as gym
 import torch
 import numpy as np
 
-episodes = 500
-lr = 1e-3
+episodes = 5000
+lr = 1e-4
 discount = 0.99
 
 
-env = gym.make("CartPole-v1", render_mode="human")
+env = gym.make("CartPole-v1")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 policy_net = torch.nn.Sequential(
@@ -19,13 +20,17 @@ policy_net = torch.nn.Sequential(
         torch.nn.Softmax(dim=-1)
 )
 
+policy_net.to(device)
+
 optimzer = torch.optim.Adam(policy_net.parameters(), lr=lr)
 
 for ep in range(episodes):
     obs, _ = env.reset()
-    obs = torch.tensor(obs, dtype=torch.float32)
+    obs = torch.tensor(obs, dtype=torch.float32).to(device)
     rewards, states, actions = [], [], []
     done = False
+    totalrew = 0
+    step = 0
 
     while not done:
         dist = torch.distributions.Categorical(policy_net(obs))
@@ -34,11 +39,15 @@ for ep in range(episodes):
         done = terminated or truncated
 
         states.append(obs)
-        actions.append(torch.tensor(action, dtype=torch.int))
+        actions.append(torch.tensor(action, dtype=torch.int).to(device))
         rewards.append(reward)
+        totalrew += reward
+        step += 1
 
-        obs = torch.tensor(next_obs, dtype=torch.float32)
+        obs = torch.tensor(next_obs, dtype=torch.float32).to(device)
 
+    if (ep + 1) % 500 == 0:
+        print(f"Episode {ep+1}: total reward = {totalrew}, steps = {step}")
     returns = []
     baseline = sum(rewards) / len(rewards)
 
@@ -57,3 +66,22 @@ for ep in range(episodes):
 
 env.close()
 
+env = gym.make("CartPole-v1", render_mode="human")
+
+for episode in range(3):  # Show 3 episodes
+    obs, _ = env.reset()
+    done = False
+    total_reward = 0
+
+    while not done:
+        obs_tensor = torch.tensor(obs, dtype=torch.float32).to(device)
+        probs = policy_net(obs_tensor)
+        action = torch.argmax(probs).item()
+
+        obs, reward, terminated, truncated, _ = env.step(action)
+        done = terminated or truncated
+        total_reward += reward
+
+    print(f"Episode {episode+1} finished with reward {total_reward}")
+
+env.close()
